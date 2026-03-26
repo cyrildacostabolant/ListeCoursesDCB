@@ -44,9 +44,10 @@ export function PrintPage() {
   // Dynamic sizing to fit on one A4 page
   const totalItems = articles.length;
   const totalCategories = sortedCategories.length;
-  const estimatedLines = totalItems + totalCategories * 2.5;
+  // Categories take more space (title + padding)
+  const estimatedLines = totalItems + totalCategories * 3;
 
-  let printCols = "print:columns-2";
+  let printColumnCount = 2;
   let printTextSize = "print:text-sm";
   let printTitleSize = "print:text-xl";
   let printCatTitleSize = "print:text-sm";
@@ -54,24 +55,24 @@ export function PrintPage() {
   let printCatSpacing = "print:mb-4";
   let printDotSize = "print:w-3 print:h-3";
 
-  if (estimatedLines > 120) {
-    printCols = "print:columns-4";
-    printTextSize = "print:text-[9px] print:leading-tight";
+  if (estimatedLines > 150) {
+    printColumnCount = 4;
+    printTextSize = "print:text-[8px] print:leading-tight";
     printTitleSize = "print:text-sm";
-    printCatTitleSize = "print:text-[10px]";
+    printCatTitleSize = "print:text-[9px]";
     printItemSpacing = "print:space-y-0";
     printCatSpacing = "print:mb-1";
     printDotSize = "print:w-2 print:h-2";
-  } else if (estimatedLines > 80) {
-    printCols = "print:columns-3";
-    printTextSize = "print:text-[10px] print:leading-tight";
+  } else if (estimatedLines > 100) {
+    printColumnCount = 3;
+    printTextSize = "print:text-[9px] print:leading-tight";
     printTitleSize = "print:text-base";
-    printCatTitleSize = "print:text-xs";
+    printCatTitleSize = "print:text-[10px]";
     printItemSpacing = "print:space-y-0";
     printCatSpacing = "print:mb-1.5";
     printDotSize = "print:w-2 print:h-2";
-  } else if (estimatedLines > 40) {
-    printCols = "print:columns-3";
+  } else if (estimatedLines > 60) {
+    printColumnCount = 2;
     printTextSize = "print:text-xs";
     printTitleSize = "print:text-lg";
     printCatTitleSize = "print:text-sm";
@@ -87,10 +88,27 @@ export function PrintPage() {
           @media print {
             @page {
               size: A4;
-              margin: 5mm;
+              margin: 0;
             }
             body {
               -webkit-print-color-adjust: exact;
+              margin: 0;
+              padding: 0;
+              background-color: white !important;
+            }
+            .print-container {
+              width: 210mm;
+              height: 297mm;
+              margin: 0 auto;
+              padding: 7mm;
+              box-sizing: border-box;
+              overflow: hidden;
+            }
+            .print-columns {
+              column-count: ${printColumnCount} !important;
+              column-gap: 10mm !important;
+              column-fill: balance !important;
+              height: 100%;
             }
           }
         `}
@@ -108,13 +126,13 @@ export function PrintPage() {
       </div>
 
       {/* Printable Area */}
-      <div className="max-w-4xl mx-auto bg-white shadow-lg print:shadow-none print:bg-white">
-        <div className="p-8 md:p-12 print:p-[5mm] bg-white">
-          <div className={`mb-4 border-b-2 border-gray-800 pb-2 print:mb-2 print:pb-1`}>
+      <div className="max-w-4xl mx-auto bg-white shadow-lg print:shadow-none print:bg-white print:max-w-none print:w-full print-container">
+        <div className="p-8 md:p-12 print:p-0 bg-white h-full flex flex-col">
+          <div className={`mb-4 border-b-2 border-gray-800 pb-2 print:mb-2 print:pb-1 shrink-0`}>
             <h1 className={`text-2xl font-bold text-gray-900 uppercase tracking-wider ${printTitleSize}`}>{liste.nom}</h1>
           </div>
 
-          <div className={`columns-1 gap-x-12 print:gap-x-6 ${printCols}`} style={{ columnFill: "auto" }}>
+          <div className="print-columns flex-1">
             {sortedCategories.map((cat) => (
               <div key={cat.nom} className={`break-inside-avoid mb-8 ${printCatSpacing}`}>
                 <h2 className={`text-lg font-bold text-gray-800 uppercase tracking-widest border-b border-gray-300 mb-3 pb-1 flex items-center gap-2 print:mb-1 print:pb-0.5 ${printCatTitleSize}`}>
