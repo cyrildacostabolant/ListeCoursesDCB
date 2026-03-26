@@ -58,11 +58,8 @@ export function PrintPage() {
       {/* Printable Area */}
       <div className="max-w-4xl mx-auto bg-white shadow-lg print:shadow-none print:bg-transparent">
         <div className="p-8 md:p-12 print:p-0 bg-white">
-          <div className="mb-8 border-b-2 border-gray-800 pb-4">
-            <h1 className="text-3xl font-bold text-gray-900 uppercase tracking-wider">{liste.nom}</h1>
-            <p className="text-gray-500 mt-2">
-              Générée le {new Date().toLocaleDateString()}
-            </p>
+          <div className="mb-4 border-b-2 border-gray-800 pb-2">
+            <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-wider">{liste.nom}</h1>
           </div>
 
           <div className="columns-1 print:columns-2 gap-x-12 print:gap-x-8" style={{ columnFill: "auto" }}>
