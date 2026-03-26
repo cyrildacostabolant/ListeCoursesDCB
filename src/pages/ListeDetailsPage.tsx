@@ -127,7 +127,7 @@ export function ListeDetailsPage() {
   return (
     <div className="max-w-5xl mx-auto pb-20 px-4 sm:px-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 bg-white p-3 rounded-lg shadow-sm border border-gray-200">
         <div className="flex items-center gap-4">
           <Link to="/" className="text-gray-500 hover:text-gray-900 bg-gray-100 p-2 rounded-md transition-colors">
             <ArrowLeft size={20} />
@@ -169,7 +169,7 @@ export function ListeDetailsPage() {
       </div>
 
       {/* Categories List */}
-      <div className="space-y-6">
+      <div className="space-y-2">
         {groupedCategories.map((cat) => {
           const isCollapsed = collapsedCategories[cat._id];
           const isAdding = addingToCategory === cat._id;
@@ -180,15 +180,15 @@ export function ListeDetailsPage() {
             <div key={cat._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               {/* Category Header */}
               <div 
-                className="flex items-center justify-between px-4 py-3 border-l-4 cursor-pointer select-none transition-colors hover:brightness-95"
+                className="flex items-center justify-between px-2 py-1.5 border-l-4 cursor-pointer select-none transition-colors hover:brightness-95"
                 style={{ borderLeftColor: catColor, backgroundColor: bgColor }}
                 onClick={() => toggleCategory(cat._id)}
               >
                 <div className="flex items-center gap-2">
                   <button className="text-gray-600 focus:outline-none">
-                    {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
+                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                   </button>
-                  <h3 className="font-bold text-gray-800" style={{ color: catColor !== '#e5e7eb' ? catColor : 'inherit', filter: 'brightness(0.6)' }}>
+                  <h3 className="font-bold text-gray-800 text-sm" style={{ color: catColor !== '#e5e7eb' ? catColor : 'inherit', filter: 'brightness(0.6)' }}>
                     {cat.nom}
                   </h3>
                 </div>
@@ -198,67 +198,59 @@ export function ListeDetailsPage() {
                     e.stopPropagation();
                     startAdd(cat._id);
                   }}
-                  className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md bg-white/60 hover:bg-white text-gray-700 border border-transparent hover:border-gray-300 transition-all"
+                  className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-white/60 hover:bg-white text-gray-700 border border-transparent hover:border-gray-300 transition-all"
                 >
-                  <Plus size={16} className="text-green-600" /> Ajouter
+                  <Plus size={14} className="text-green-600" /> Ajouter
                 </button>
               </div>
 
               {/* Category Content */}
               {!isCollapsed && (
                 <div className="border-t border-gray-200">
-                  <table className="w-full text-left text-sm sm:text-base">
-                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
-                      <tr>
-                        <th className="px-4 py-3 w-12 text-center">✓</th>
-                        <th className="px-4 py-3">Article</th>
-                        <th className="px-4 py-3 w-24 sm:w-32">Qté</th>
-                        <th className="px-4 py-3 w-24 text-right">Actions</th>
-                      </tr>
-                    </thead>
+                  <table className="w-full text-left text-sm">
                     <tbody className="divide-y divide-gray-100">
                       {cat.items.map((item) => (
                         <tr key={item._id} className="hover:bg-gray-50 transition-colors group">
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-2 py-1 w-8 text-center">
                             <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer" />
                           </td>
                           
                           {editingId === item._id ? (
                             <>
-                              <td className="px-4 py-2">
+                              <td className="px-2 py-1">
                                 <input
                                   type="text"
                                   value={editNom}
                                   onChange={(e) => setEditNom(e.target.value)}
-                                  className="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                   autoFocus
                                   onKeyDown={(e) => e.key === 'Enter' && saveEdit(item)}
                                 />
                               </td>
-                              <td className="px-4 py-2">
+                              <td className="px-2 py-1 w-20 sm:w-24">
                                 <input
                                   type="text"
                                   value={editQuantite}
                                   onChange={(e) => setEditQuantite(e.target.value)}
-                                  className="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                   onKeyDown={(e) => e.key === 'Enter' && saveEdit(item)}
                                 />
                               </td>
-                              <td className="px-4 py-2 text-right">
+                              <td className="px-2 py-1 w-20 text-right">
                                 <div className="flex items-center justify-end gap-1">
-                                  <button onClick={() => saveEdit(item)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-md"><Check size={18} /></button>
-                                  <button onClick={() => setEditingId(null)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md"><X size={18} /></button>
+                                  <button onClick={() => saveEdit(item)} className="p-1 text-green-600 hover:bg-green-50 rounded"><Check size={14} /></button>
+                                  <button onClick={() => setEditingId(null)} className="p-1 text-red-600 hover:bg-red-50 rounded"><X size={14} /></button>
                                 </div>
                               </td>
                             </>
                           ) : (
                             <>
-                              <td className="px-4 py-3 font-medium text-gray-800">{item.articleNom}</td>
-                              <td className="px-4 py-3 text-gray-600">{item.quantite}</td>
-                              <td className="px-4 py-3 text-right">
+                              <td className="px-2 py-1 font-medium text-gray-800">{item.articleNom}</td>
+                              <td className="px-2 py-1 text-gray-600 w-20 sm:w-24">{item.quantite}</td>
+                              <td className="px-2 py-1 w-20 text-right">
                                 <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => startEdit(item)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Modifier">
-                                    <Edit2 size={16} />
+                                  <button onClick={() => startEdit(item)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Modifier">
+                                    <Edit2 size={14} />
                                   </button>
                                   <button
                                     onClick={() => {
@@ -266,10 +258,10 @@ export function ListeDetailsPage() {
                                         removeArticle({ id: item._id, listeId });
                                       }
                                     }}
-                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-md"
+                                    className="p-1 text-red-600 hover:bg-red-50 rounded"
                                     title="Supprimer"
                                   >
-                                    <Trash2 size={16} />
+                                    <Trash2 size={14} />
                                   </button>
                                 </div>
                               </td>
@@ -281,37 +273,37 @@ export function ListeDetailsPage() {
                       {/* Inline Add Row */}
                       {isAdding && (
                         <tr className="bg-blue-50/50">
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-2 py-1 w-8 text-center">
                             <span className="text-gray-300">-</span>
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
                               value={newNom}
                               onChange={(e) => setNewNom(e.target.value)}
                               placeholder="Nom de l'article..."
-                              className="w-full px-3 py-1.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                              className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
                               autoFocus
                               onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat._id)}
                             />
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="px-2 py-1 w-20 sm:w-24">
                             <input
                               type="text"
                               value={newQuantite}
                               onChange={(e) => setNewQuantite(e.target.value)}
                               placeholder="Qté"
-                              className="w-full px-3 py-1.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                              className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
                               onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat._id)}
                             />
                           </td>
-                          <td className="px-4 py-2 text-right">
+                          <td className="px-2 py-1 w-20 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button onClick={() => handleAdd(cat._id)} className="p-1.5 text-green-600 hover:bg-green-100 rounded-md" title="Valider">
-                                <Check size={18} />
+                              <button onClick={() => handleAdd(cat._id)} className="p-1 text-green-600 hover:bg-green-100 rounded" title="Valider">
+                                <Check size={14} />
                               </button>
-                              <button onClick={cancelAdd} className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-md" title="Annuler">
-                                <X size={18} />
+                              <button onClick={cancelAdd} className="p-1 text-gray-500 hover:bg-gray-200 rounded" title="Annuler">
+                                <X size={14} />
                               </button>
                             </div>
                           </td>
@@ -320,7 +312,7 @@ export function ListeDetailsPage() {
 
                       {cat.items.length === 0 && !isAdding && (
                         <tr>
-                          <td colSpan={4} className="px-4 py-6 text-center text-sm text-gray-500 italic bg-gray-50/50">
+                          <td colSpan={4} className="px-2 py-2 text-center text-xs text-gray-500 italic bg-gray-50/50">
                             Aucun article — cliquez sur "+ Ajouter"
                           </td>
                         </tr>
