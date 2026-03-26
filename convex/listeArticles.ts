@@ -138,6 +138,8 @@ export const update = mutation({
     const item = await ctx.db.get(args.id);
     if (!item) return;
 
+    const oldArticleId = item.articleId;
+
     let article = await ctx.db.query("articles").filter(q => q.eq(q.field("nom"), args.nom)).first();
     let articleId;
     if (article) {
@@ -158,6 +160,20 @@ export const update = mutation({
       quantite: args.quantite,
     });
 
+    // Clean up old article if it's no longer used
+    if (oldArticleId !== articleId) {
+      const otherUsages = await ctx.db.query("listeArticles")
+        .filter(q => q.eq(q.field("articleId"), oldArticleId))
+        .first();
+        
+      if (!otherUsages) {
+        const oldArticle = await ctx.db.get(oldArticleId);
+        if (oldArticle) {
+          await ctx.db.delete(oldArticleId);
+        }
+      }
+    }
+
     await ctx.db.patch(args.listeId, { dateModification: Date.now() });
   },
 });
@@ -165,6 +181,25 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("listeArticles"), listeId: v.id("listes") },
   handler: async (ctx, args) => {
+    const item = await ctx.db.get(args.id);
+    if (item) {
+      // Check if this article is used in any other list
+      const otherUsages = await ctx.db.query("listeArticles")
+        .filter(q => q.and(
+          q.eq(q.field("articleId"), item.articleId),
+          q.neq(q.field("_id"), args.id)
+        ))
+        .first();
+
+      // If not used elsewhere, delete it from the 'articles' table
+      if (!otherUsages) {
+        const article = await ctx.db.get(item.articleId);
+        if (article) {
+          await ctx.db.delete(item.articleId);
+        }
+      }
+    }
+
     await ctx.db.delete(args.id);
     await ctx.db.patch(args.listeId, { dateModification: Date.now() });
   },

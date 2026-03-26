@@ -43,6 +43,23 @@ export const remove = mutation({
     // Delete listeArticles first
     const items = await ctx.db.query("listeArticles").withIndex("by_liste", q => q.eq("listeId", args.id)).collect();
     for (const item of items) {
+      // Check if this article is used in any other list
+      const otherUsages = await ctx.db.query("listeArticles")
+        .filter(q => q.and(
+          q.eq(q.field("articleId"), item.articleId),
+          q.neq(q.field("listeId"), args.id)
+        ))
+        .first();
+
+      // If not used elsewhere, delete it from the 'articles' table
+      if (!otherUsages) {
+        const article = await ctx.db.get(item.articleId);
+        if (article) {
+          await ctx.db.delete(item.articleId);
+        }
+      }
+
+      // Delete the link
       await ctx.db.delete(item._id);
     }
     await ctx.db.delete(args.id);
