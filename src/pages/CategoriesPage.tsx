@@ -1,7 +1,73 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { ArrowUp, ArrowDown, Edit2, Trash2, Plus, Check, X } from "lucide-react";
+
+const COLOR_PALETTE = [
+  // Red
+  "#fca5a5", "#f87171", "#ef4444", "#dc2626", "#b91c1c",
+  // Orange
+  "#fdba74", "#fb923c", "#f97316", "#ea580c", "#c2410c",
+  // Yellow
+  "#fcd34d", "#fbbf24", "#f59e0b", "#d97706", "#b45309",
+  // Green
+  "#86efac", "#4ade80", "#22c55e", "#16a34a", "#15803d",
+  // Teal
+  "#5eead4", "#2dd4bf", "#14b8a6", "#0d9488", "#0f766e",
+  // Blue
+  "#93c5fd", "#60a5fa", "#3b82f6", "#2563eb", "#1d4ed8",
+  // Indigo
+  "#a5b4fc", "#818cf8", "#6366f1", "#4f46e5", "#4338ca",
+  // Purple
+  "#d8b4fe", "#c084fc", "#a855f7", "#9333ea", "#7e22ce",
+  // Pink
+  "#f9a8d4", "#f472b6", "#ec4899", "#db2777", "#be185d",
+  // Gray
+  "#d1d5db", "#9ca3af", "#6b7280", "#4b5563", "#374151",
+];
+
+function ColorPicker({ color, onChange }: { color: string, onChange: (c: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={popoverRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-10 h-10 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        style={{ backgroundColor: color }}
+        title="Choisir une couleur"
+      />
+      {isOpen && (
+        <div className="absolute z-50 mt-2 p-3 bg-white rounded-lg shadow-xl border border-gray-200 w-[220px] left-0 top-full">
+          <div className="grid grid-cols-5 gap-2">
+            {COLOR_PALETTE.map(c => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => { onChange(c); setIsOpen(false); }}
+                className={`w-8 h-8 rounded-full border border-gray-200 hover:scale-110 transition-transform ${color === c ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`}
+                style={{ backgroundColor: c }}
+                title={c}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function CategoriesPage() {
   const categories = useQuery(api.categories.get);
@@ -49,13 +115,7 @@ export function CategoriesPage() {
       <h2 className="text-2xl font-bold mb-6">Gestion des Catégories</h2>
 
       <form onSubmit={handleAdd} className="mb-8 flex gap-4">
-        <input
-          type="color"
-          value={newCouleur}
-          onChange={(e) => setNewCouleur(e.target.value)}
-          className="w-12 h-10 p-1 border border-gray-300 rounded-md cursor-pointer"
-          title="Couleur de la catégorie"
-        />
+        <ColorPicker color={newCouleur} onChange={setNewCouleur} />
         <input
           type="text"
           value={newNom}
@@ -71,12 +131,12 @@ export function CategoriesPage() {
         </button>
       </form>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="p-4 font-medium text-gray-600 w-16 text-center">Ordre</th>
-              <th className="p-4 font-medium text-gray-600 w-16 text-center">Couleur</th>
+              <th className="p-4 font-medium text-gray-600 w-24 text-center">Couleur</th>
               <th className="p-4 font-medium text-gray-600">Nom</th>
               <th className="p-4 font-medium text-gray-600 w-24 text-center">Actif</th>
               <th className="p-4 font-medium text-gray-600 w-48 text-right">Actions</th>
@@ -86,14 +146,9 @@ export function CategoriesPage() {
             {categories.map((cat, index) => (
               <tr key={cat._id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="p-4 text-center text-gray-500">{cat.ordre}</td>
-                <td className="p-4 text-center">
+                <td className="p-4 text-center flex justify-center">
                   {editingId === cat._id ? (
-                    <input
-                      type="color"
-                      value={editCouleur}
-                      onChange={(e) => setEditCouleur(e.target.value)}
-                      className="w-8 h-8 p-0 border-0 rounded cursor-pointer"
-                    />
+                    <ColorPicker color={editCouleur} onChange={setEditCouleur} />
                   ) : (
                     <div 
                       className="w-6 h-6 rounded-full mx-auto border border-gray-300" 
