@@ -57,23 +57,23 @@ export function PrintPage() {
 
   if (estimatedLines > 150) {
     printColumnCount = 4;
-    printTextSize = "print:text-[8px] print:leading-tight";
+    printTextSize = "print:text-[9px] print:leading-tight";
     printTitleSize = "print:text-sm";
-    printCatTitleSize = "print:text-[9px]";
+    printCatTitleSize = "print:text-[10px]";
     printItemSpacing = "print:space-y-0";
     printCatSpacing = "print:mb-1";
     printDotSize = "print:w-2 print:h-2";
   } else if (estimatedLines > 100) {
     printColumnCount = 3;
-    printTextSize = "print:text-[9px] print:leading-tight";
+    printTextSize = "print:text-[10px] print:leading-tight";
     printTitleSize = "print:text-base";
-    printCatTitleSize = "print:text-[10px]";
+    printCatTitleSize = "print:text-[11px]";
     printItemSpacing = "print:space-y-0";
     printCatSpacing = "print:mb-1.5";
     printDotSize = "print:w-2 print:h-2";
   } else if (estimatedLines > 60) {
     printColumnCount = 2;
-    printTextSize = "print:text-xs";
+    printTextSize = "print:text-[11px]";
     printTitleSize = "print:text-lg";
     printCatTitleSize = "print:text-sm";
     printItemSpacing = "print:space-y-0.5";
