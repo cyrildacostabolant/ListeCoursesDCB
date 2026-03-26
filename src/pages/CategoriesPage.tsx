@@ -111,7 +111,7 @@ export function CategoriesPage() {
   if (categories === undefined) return <div>Chargement...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto pb-32">
       <h2 className="text-2xl font-bold mb-6">Gestion des Catégories</h2>
 
       <form onSubmit={handleAdd} className="mb-8 flex gap-4">
