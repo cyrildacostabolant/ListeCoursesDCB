@@ -81,7 +81,7 @@ export function PrintPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-100 print:bg-white p-4 md:p-8 print:p-0">
       <style>
         {`
           @media print {
@@ -108,7 +108,7 @@ export function PrintPage() {
       </div>
 
       {/* Printable Area */}
-      <div className="max-w-4xl mx-auto bg-white shadow-lg print:shadow-none print:bg-transparent">
+      <div className="max-w-4xl mx-auto bg-white shadow-lg print:shadow-none print:bg-white">
         <div className="p-8 md:p-12 print:p-0 bg-white">
           <div className={`mb-4 border-b-2 border-gray-800 pb-2 print:mb-2 print:pb-1`}>
             <h1 className={`text-2xl font-bold text-gray-900 uppercase tracking-wider ${printTitleSize}`}>{liste.nom}</h1>
