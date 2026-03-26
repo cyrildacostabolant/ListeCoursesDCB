@@ -48,14 +48,14 @@ export function PrintPage() {
   const estimatedLines = totalItems + totalCategories * 3;
 
   let printColumnCount = 2;
-  let printTextSize = "print:text-sm";
+  let printTextSize = "print:text-[14px]";
   let printTitleSize = "print:text-xl";
-  let printCatTitleSize = "print:text-sm";
+  let printCatTitleSize = "print:text-[15px]";
   let printItemSpacing = "print:space-y-1";
   let printCatSpacing = "print:mb-4";
-  let printDotSize = "print:w-3 print:h-3";
+  let printDotSize = "print:w-3.5 print:h-3.5";
 
-  if (estimatedLines > 150) {
+  if (estimatedLines > 160) {
     printColumnCount = 4;
     printTextSize = "print:text-[9px] print:leading-tight";
     printTitleSize = "print:text-sm";
@@ -63,22 +63,22 @@ export function PrintPage() {
     printItemSpacing = "print:space-y-0";
     printCatSpacing = "print:mb-1";
     printDotSize = "print:w-2 print:h-2";
-  } else if (estimatedLines > 100) {
-    printColumnCount = 3;
-    printTextSize = "print:text-[10px] print:leading-tight";
+  } else if (estimatedLines > 120) {
+    printColumnCount = 4;
+    printTextSize = "print:text-[11px] print:leading-tight";
     printTitleSize = "print:text-base";
-    printCatTitleSize = "print:text-[11px]";
-    printItemSpacing = "print:space-y-0";
-    printCatSpacing = "print:mb-1.5";
-    printDotSize = "print:w-2 print:h-2";
-  } else if (estimatedLines > 60) {
-    printColumnCount = 2;
-    printTextSize = "print:text-[11px]";
-    printTitleSize = "print:text-lg";
-    printCatTitleSize = "print:text-sm";
+    printCatTitleSize = "print:text-[12px]";
     printItemSpacing = "print:space-y-0.5";
     printCatSpacing = "print:mb-2";
     printDotSize = "print:w-2.5 print:h-2.5";
+  } else if (estimatedLines > 80) {
+    printColumnCount = 3;
+    printTextSize = "print:text-[12px] print:leading-tight";
+    printTitleSize = "print:text-lg";
+    printCatTitleSize = "print:text-[13px]";
+    printItemSpacing = "print:space-y-0.5";
+    printCatSpacing = "print:mb-3";
+    printDotSize = "print:w-3 print:h-3";
   }
 
   return (
