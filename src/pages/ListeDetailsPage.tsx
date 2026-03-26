@@ -80,7 +80,7 @@ export function ListeDetailsPage() {
     });
     setNewNom("");
     setNewQuantite("1");
-    // Keep adding mode open for fast entry
+    setAddingToCategory(null);
   };
 
   const startEdit = (item: any) => {
