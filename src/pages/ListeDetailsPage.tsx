@@ -31,6 +31,29 @@ export function ListeDetailsPage() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   
+  // Initialize collapsed state for categories with 0 items
+  React.useEffect(() => {
+    if (articles && categories) {
+      const activeCats = categories.filter(c => c.actif);
+      const initialCollapsedState: Record<string, boolean> = {};
+      
+      activeCats.forEach(cat => {
+        const items = articles.filter(a => a.categorieId === cat._id);
+        if (items.length === 0) {
+          initialCollapsedState[cat._id] = true;
+        }
+      });
+      
+      setCollapsedCategories(prev => {
+        // Only set if we haven't manually toggled things yet (object is empty)
+        if (Object.keys(prev).length === 0) {
+          return initialCollapsedState;
+        }
+        return prev;
+      });
+    }
+  }, [articles, categories]);
+
   const toggleCategory = (catId: string) => {
     setCollapsedCategories(prev => ({ ...prev, [catId]: !prev[catId] }));
   };
