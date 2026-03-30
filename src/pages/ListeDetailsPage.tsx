@@ -28,6 +28,7 @@ export function ListeDetailsPage() {
 
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set());
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -138,6 +139,10 @@ export function ListeDetailsPage() {
     setIsEditingTitle(false);
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   if (liste === undefined || articles === undefined || categories === undefined) {
     return <div className="p-8 text-center">Chargement...</div>;
   }
@@ -211,6 +216,17 @@ export function ListeDetailsPage() {
         </div>
         
         <div className="flex items-center gap-2 self-end sm:self-auto">
+          <button
+            onClick={toggleSidebar}
+            className={`md:hidden flex items-center gap-2 px-3 py-2 rounded-md font-medium transition-colors border ${
+              isSidebarOpen 
+                ? "bg-blue-50 border-blue-200 text-blue-700" 
+                : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            <ChevronRight size={16} className={`transition-transform ${isSidebarOpen ? "rotate-90" : ""}`} />
+            Rayons
+          </button>
           <span className="text-sm text-gray-500 mr-2 hidden md:inline">
             {articles.length} article{articles.length !== 1 ? 's' : ''}
           </span>
@@ -223,9 +239,12 @@ export function ListeDetailsPage() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6 items-start">
+      <div className="flex flex-col md:flex-row gap-6 items-start relative">
         {/* Sidebar: Category Selection */}
-        <div className="w-full md:w-64 shrink-0 bg-white p-4 rounded-lg shadow-sm border border-gray-200 sticky top-4">
+        <div className={`
+          w-full md:w-64 shrink-0 bg-white p-4 rounded-lg shadow-sm border border-gray-200 sticky top-4 z-10
+          ${isSidebarOpen ? "block" : "hidden md:block"}
+        `}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-gray-800 flex items-center gap-2">
               Rayons
@@ -246,7 +265,7 @@ export function ListeDetailsPage() {
             </div>
           </div>
           
-          <div className="space-y-1 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-1 max-h-[50vh] md:max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
             {activeCategories.sort((a, b) => a.ordre - b.ordre).map(cat => (
               <label 
                 key={cat._id} 
