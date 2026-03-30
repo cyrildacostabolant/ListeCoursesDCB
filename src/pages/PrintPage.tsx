@@ -55,7 +55,7 @@ export function PrintPage() {
   let printCatSpacing = "print:mb-4";
   let printDotSize = "print:w-3.5 print:h-3.5";
 
-  if (estimatedLines > 160) {
+  if (estimatedLines > 180) {
     printColumnCount = 4;
     printTextSize = "print:text-[9px] print:leading-tight";
     printTitleSize = "print:text-sm";
@@ -63,7 +63,7 @@ export function PrintPage() {
     printItemSpacing = "print:space-y-0";
     printCatSpacing = "print:mb-1";
     printDotSize = "print:w-2 print:h-2";
-  } else if (estimatedLines > 120) {
+  } else if (estimatedLines > 140) {
     printColumnCount = 4;
     printTextSize = "print:text-[11px] print:leading-tight";
     printTitleSize = "print:text-base";
@@ -71,7 +71,7 @@ export function PrintPage() {
     printItemSpacing = "print:space-y-0.5";
     printCatSpacing = "print:mb-2";
     printDotSize = "print:w-2.5 print:h-2.5";
-  } else if (estimatedLines > 80) {
+  } else if (estimatedLines > 100) {
     printColumnCount = 3;
     printTextSize = "print:text-[12px] print:leading-tight";
     printTitleSize = "print:text-lg";

@@ -27,32 +27,62 @@ export function ListeDetailsPage() {
   const [newQuantite, setNewQuantite] = useState("1");
 
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set());
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   
-  // Initialize collapsed state for categories with 0 items
+  // Initialize collapsed state and selected categories
   React.useEffect(() => {
     if (articles && categories) {
       const activeCats = categories.filter(c => c.actif);
       const initialCollapsedState: Record<string, boolean> = {};
+      const initialSelectedIds = new Set<string>();
       
       activeCats.forEach(cat => {
         const items = articles.filter(a => a.categorieId === cat._id);
         if (items.length === 0) {
           initialCollapsedState[cat._id] = true;
+        } else {
+          initialSelectedIds.add(cat._id);
         }
       });
       
       setCollapsedCategories(prev => {
-        // Only set if we haven't manually toggled things yet (object is empty)
         if (Object.keys(prev).length === 0) {
           return initialCollapsedState;
         }
         return prev;
       });
+
+      setSelectedCategoryIds(prev => {
+        if (prev.size === 0) {
+          return initialSelectedIds;
+        }
+        return prev;
+      });
     }
   }, [articles, categories]);
+
+  const toggleCategorySelection = (catId: string) => {
+    setSelectedCategoryIds(prev => {
+      const next = new Set(prev);
+      if (next.has(catId)) {
+        next.delete(catId);
+      } else {
+        next.add(catId);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllCategories = (select: boolean) => {
+    if (select && categories) {
+      setSelectedCategoryIds(new Set(categories.filter(c => c.actif).map(c => c._id)));
+    } else {
+      setSelectedCategoryIds(new Set());
+    }
+  };
 
   const toggleCategory = (catId: string) => {
     setCollapsedCategories(prev => ({ ...prev, [catId]: !prev[catId] }));
@@ -118,11 +148,13 @@ export function ListeDetailsPage() {
 
   const activeCategories = categories.filter(c => c.actif);
   
-  // Group articles by category
-  const groupedCategories = activeCategories.map(cat => ({
-    ...cat,
-    items: articles.filter(a => a.categorieId === cat._id)
-  }));
+  // Group articles by category, filtering by selected categories
+  const groupedCategories = activeCategories
+    .filter(cat => selectedCategoryIds.has(cat._id))
+    .map(cat => ({
+      ...cat,
+      items: articles.filter(a => a.categorieId === cat._id)
+    }));
 
   // Add a "Sans catégorie" group if there are articles with inactive/deleted categories
   const activeCategoryIds = new Set(activeCategories.map(c => c._id));
@@ -191,168 +223,227 @@ export function ListeDetailsPage() {
         </div>
       </div>
 
-      {/* Categories List */}
-      <div className="space-y-2">
-        {groupedCategories.map((cat) => {
-          const isCollapsed = collapsedCategories[cat._id];
-          const isAdding = addingToCategory === cat._id;
-          const catColor = cat.couleur || "#3b82f6"; // default blue
-          const bgColor = getLightColor(catColor);
-
-          return (
-            <div key={cat._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              {/* Category Header */}
-              <div 
-                className="flex items-center justify-between px-2 py-1.5 border-l-4 cursor-pointer select-none transition-colors hover:brightness-95"
-                style={{ borderLeftColor: catColor, backgroundColor: bgColor }}
-                onClick={() => toggleCategory(cat._id)}
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        {/* Sidebar: Category Selection */}
+        <div className="w-full md:w-64 shrink-0 bg-white p-4 rounded-lg shadow-sm border border-gray-200 sticky top-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+              Rayons
+            </h3>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => toggleAllCategories(true)}
+                className="text-[10px] text-blue-600 hover:underline font-medium"
               >
-                <div className="flex items-center gap-2">
-                  <button className="text-gray-600 focus:outline-none">
-                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                  </button>
-                  <h3 className="font-bold text-gray-800 text-sm" style={{ color: catColor !== '#e5e7eb' ? catColor : 'inherit', filter: 'brightness(0.6)' }}>
-                    {cat.nom}
-                  </h3>
-                </div>
-                
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    startAdd(cat._id);
-                  }}
-                  className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-white/60 hover:bg-white text-gray-700 border border-transparent hover:border-gray-300 transition-all"
-                >
-                  <Plus size={14} className="text-green-600" /> Ajouter
-                </button>
-              </div>
-
-              {/* Category Content */}
-              {!isCollapsed && (
-                <div className="border-t border-gray-200">
-                  <table className="w-full text-left text-sm">
-                    <tbody className="divide-y divide-gray-100">
-                      {cat.items.map((item) => (
-                        <tr key={item._id} className="hover:bg-gray-50 transition-colors group">
-                          <td className="px-2 py-1 w-8 text-center">
-                            <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer" />
-                          </td>
-                          
-                          {editingId === item._id ? (
-                            <>
-                              <td className="px-2 py-1">
-                                <input
-                                  type="text"
-                                  value={editNom}
-                                  onChange={(e) => setEditNom(e.target.value)}
-                                  className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                  autoFocus
-                                  onKeyDown={(e) => e.key === 'Enter' && saveEdit(item)}
-                                />
-                              </td>
-                              <td className="px-2 py-1 w-20 sm:w-24">
-                                <input
-                                  type="text"
-                                  value={editQuantite}
-                                  onChange={(e) => setEditQuantite(e.target.value)}
-                                  className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                  onKeyDown={(e) => e.key === 'Enter' && saveEdit(item)}
-                                />
-                              </td>
-                              <td className="px-2 py-1 w-20 text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                  <button onClick={() => saveEdit(item)} className="p-1 text-green-600 hover:bg-green-50 rounded"><Check size={14} /></button>
-                                  <button onClick={() => setEditingId(null)} className="p-1 text-red-600 hover:bg-red-50 rounded"><X size={14} /></button>
-                                </div>
-                              </td>
-                            </>
-                          ) : (
-                            <>
-                              <td className="px-2 py-1 font-medium text-gray-800">{item.articleNom}</td>
-                              <td className="px-2 py-1 text-gray-600 w-20 sm:w-24">{item.quantite}</td>
-                              <td className="px-2 py-1 w-20 text-right">
-                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => startEdit(item)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Modifier">
-                                    <Edit2 size={14} />
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      if (window.confirm("Supprimer cet article ?")) {
-                                        removeArticle({ id: item._id, listeId });
-                                      }
-                                    }}
-                                    className="p-1 text-red-600 hover:bg-red-50 rounded"
-                                    title="Supprimer"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
-                              </td>
-                            </>
-                          )}
-                        </tr>
-                      ))}
-
-                      {/* Inline Add Row */}
-                      {isAdding && (
-                        <tr className="bg-blue-50/50">
-                          <td className="px-2 py-1 w-8 text-center">
-                            <span className="text-gray-300">-</span>
-                          </td>
-                          <td className="px-2 py-1">
-                            <input
-                              type="text"
-                              value={newNom}
-                              onChange={(e) => setNewNom(e.target.value)}
-                              placeholder="Nom de l'article..."
-                              className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
-                              autoFocus
-                              onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat._id)}
-                            />
-                          </td>
-                          <td className="px-2 py-1 w-20 sm:w-24">
-                            <input
-                              type="text"
-                              value={newQuantite}
-                              onChange={(e) => setNewQuantite(e.target.value)}
-                              placeholder="Qté"
-                              className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
-                              onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat._id)}
-                            />
-                          </td>
-                          <td className="px-2 py-1 w-20 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <button onClick={() => handleAdd(cat._id)} className="p-1 text-green-600 hover:bg-green-100 rounded" title="Valider">
-                                <Check size={14} />
-                              </button>
-                              <button onClick={cancelAdd} className="p-1 text-gray-500 hover:bg-gray-200 rounded" title="Annuler">
-                                <X size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-
-                      {cat.items.length === 0 && !isAdding && (
-                        <tr>
-                          <td colSpan={4} className="px-2 py-2 text-center text-xs text-gray-500 italic bg-gray-50/50">
-                            Aucun article — cliquez sur "+ Ajouter"
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                Tous
+              </button>
+              <button 
+                onClick={() => toggleAllCategories(false)}
+                className="text-[10px] text-gray-500 hover:underline font-medium"
+              >
+                Aucun
+              </button>
             </div>
-          );
-        })}
-
-        {groupedCategories.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg border border-dashed border-gray-300 text-gray-500">
-            Aucune catégorie active. Allez dans "Catégories" pour en créer.
           </div>
-        )}
+          
+          <div className="space-y-1 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            {activeCategories.sort((a, b) => a.ordre - b.ordre).map(cat => (
+              <label 
+                key={cat._id} 
+                className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors hover:bg-gray-50 group ${selectedCategoryIds.has(cat._id) ? 'bg-blue-50/30' : ''}`}
+              >
+                <div className="relative flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategoryIds.has(cat._id)}
+                    onChange={() => toggleCategorySelection(cat._id)}
+                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                  />
+                </div>
+                <div className="flex-1 flex items-center gap-2 min-w-0">
+                  <div 
+                    className="w-2 h-2 rounded-full shrink-0" 
+                    style={{ backgroundColor: cat.couleur || "#3b82f6" }}
+                  />
+                  <span className={`text-sm truncate ${selectedCategoryIds.has(cat._id) ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
+                    {cat.nom}
+                  </span>
+                </div>
+                {articles.filter(a => a.categorieId === cat._id).length > 0 && (
+                  <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full group-hover:bg-white transition-colors">
+                    {articles.filter(a => a.categorieId === cat._id).length}
+                  </span>
+                )}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content: Categories List */}
+        <div className="flex-1 min-w-0 space-y-2 w-full">
+          {groupedCategories.map((cat) => {
+            const isCollapsed = collapsedCategories[cat._id];
+            const isAdding = addingToCategory === cat._id;
+            const catColor = cat.couleur || "#3b82f6"; // default blue
+            const bgColor = getLightColor(catColor);
+
+            return (
+              <div key={cat._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                {/* Category Header */}
+                <div 
+                  className="flex items-center justify-between px-2 py-1.5 border-l-4 cursor-pointer select-none transition-colors hover:brightness-95"
+                  style={{ borderLeftColor: catColor, backgroundColor: bgColor }}
+                  onClick={() => toggleCategory(cat._id)}
+                >
+                  <div className="flex items-center gap-2">
+                    <button className="text-gray-600 focus:outline-none">
+                      {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                    </button>
+                    <h3 className="font-bold text-gray-800 text-sm" style={{ color: catColor !== '#e5e7eb' ? catColor : 'inherit', filter: 'brightness(0.6)' }}>
+                      {cat.nom}
+                    </h3>
+                  </div>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startAdd(cat._id);
+                    }}
+                    className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-white/60 hover:bg-white text-gray-700 border border-transparent hover:border-gray-300 transition-all"
+                  >
+                    <Plus size={14} className="text-green-600" /> Ajouter
+                  </button>
+                </div>
+
+                {/* Category Content */}
+                {!isCollapsed && (
+                  <div className="border-t border-gray-200">
+                    <table className="w-full text-left text-sm">
+                      <tbody className="divide-y divide-gray-100">
+                        {cat.items.map((item) => (
+                          <tr key={item._id} className="hover:bg-gray-50 transition-colors group">
+                            <td className="px-2 py-1 w-8 text-center">
+                              <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer" />
+                            </td>
+                            
+                            {editingId === item._id ? (
+                              <>
+                                <td className="px-2 py-1">
+                                  <input
+                                    type="text"
+                                    value={editNom}
+                                    onChange={(e) => setEditNom(e.target.value)}
+                                    className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    autoFocus
+                                    onKeyDown={(e) => e.key === 'Enter' && saveEdit(item)}
+                                  />
+                                </td>
+                                <td className="px-2 py-1 w-20 sm:w-24">
+                                  <input
+                                    type="text"
+                                    value={editQuantite}
+                                    onChange={(e) => setEditQuantite(e.target.value)}
+                                    className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    onKeyDown={(e) => e.key === 'Enter' && saveEdit(item)}
+                                  />
+                                </td>
+                                <td className="px-2 py-1 w-20 text-right">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <button onClick={() => saveEdit(item)} className="p-1 text-green-600 hover:bg-green-50 rounded"><Check size={14} /></button>
+                                    <button onClick={() => setEditingId(null)} className="p-1 text-red-600 hover:bg-red-50 rounded"><X size={14} /></button>
+                                  </div>
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                <td className="px-2 py-1 font-medium text-gray-800">{item.articleNom}</td>
+                                <td className="px-2 py-1 text-gray-600 w-20 sm:w-24">{item.quantite}</td>
+                                <td className="px-2 py-1 w-20 text-right">
+                                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => startEdit(item)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Modifier">
+                                      <Edit2 size={14} />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        if (window.confirm("Supprimer cet article ?")) {
+                                          removeArticle({ id: item._id, listeId });
+                                        }
+                                      }}
+                                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                      title="Supprimer"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </>
+                            )}
+                          </tr>
+                        ))}
+
+                        {/* Inline Add Row */}
+                        {isAdding && (
+                          <tr className="bg-blue-50/50">
+                            <td className="px-2 py-1 w-8 text-center">
+                              <span className="text-gray-300">-</span>
+                            </td>
+                            <td className="px-2 py-1">
+                              <input
+                                type="text"
+                                value={newNom}
+                                onChange={(e) => setNewNom(e.target.value)}
+                                placeholder="Nom de l'article..."
+                                className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                                autoFocus
+                                onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat._id)}
+                              />
+                            </td>
+                            <td className="px-2 py-1 w-20 sm:w-24">
+                              <input
+                                type="text"
+                                value={newQuantite}
+                                onChange={(e) => setNewQuantite(e.target.value)}
+                                placeholder="Qté"
+                                className="w-full px-2 py-0.5 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                                onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat._id)}
+                              />
+                            </td>
+                            <td className="px-2 py-1 w-20 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <button onClick={() => handleAdd(cat._id)} className="p-1 text-green-600 hover:bg-green-100 rounded" title="Valider">
+                                  <Check size={14} />
+                                </button>
+                                <button onClick={cancelAdd} className="p-1 text-gray-500 hover:bg-gray-200 rounded" title="Annuler">
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+
+                        {cat.items.length === 0 && !isAdding && (
+                          <tr>
+                            <td colSpan={4} className="px-2 py-2 text-center text-xs text-gray-500 italic bg-gray-50/50">
+                              Aucun article — cliquez sur "+ Ajouter"
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {groupedCategories.length === 0 && (
+            <div className="text-center py-12 bg-white rounded-lg border border-dashed border-gray-300 text-gray-500">
+              {selectedCategoryIds.size === 0 
+                ? "Sélectionnez des rayons à gauche pour commencer votre liste."
+                : "Aucune catégorie active. Allez dans \"Catégories\" pour en créer."}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
