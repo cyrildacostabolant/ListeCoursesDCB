@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -41,6 +42,8 @@ export function PrintPage() {
 
   const sortedCategories = (Object.values(grouped) as { nom: string; ordre: number; couleur: string; items: any[] }[]).sort((a, b) => a.ordre - b.ordre);
 
+  const [columnMode, setColumnMode] = useState<'auto' | 1 | 2 | 3 | 4>('auto');
+
   // Dynamic sizing to fit on one A4 page
   const totalItems = articles.length;
   const totalCategories = sortedCategories.length;
@@ -55,30 +58,63 @@ export function PrintPage() {
   let printCatSpacing = "print:mb-4";
   let printDotSize = "print:w-3.5 print:h-3.5";
 
-  if (estimatedLines > 200) {
-    printColumnCount = 4;
-    printTextSize = "print:text-[9px] print:leading-tight";
-    printTitleSize = "print:text-sm";
-    printCatTitleSize = "print:text-[10px]";
-    printItemSpacing = "print:space-y-0";
-    printCatSpacing = "print:mb-1";
-    printDotSize = "print:w-2 print:h-2";
-  } else if (estimatedLines > 160) {
-    printColumnCount = 4;
-    printTextSize = "print:text-[11px] print:leading-tight";
-    printTitleSize = "print:text-base";
-    printCatTitleSize = "print:text-[12px]";
-    printItemSpacing = "print:space-y-0.5";
-    printCatSpacing = "print:mb-2";
-    printDotSize = "print:w-2.5 print:h-2.5";
-  } else if (estimatedLines > 125) {
-    printColumnCount = 3;
-    printTextSize = "print:text-[12px] print:leading-tight";
-    printTitleSize = "print:text-lg";
-    printCatTitleSize = "print:text-[13px]";
-    printItemSpacing = "print:space-y-0.5";
-    printCatSpacing = "print:mb-3";
-    printDotSize = "print:w-3 print:h-3";
+  if (columnMode === 'auto') {
+    if (estimatedLines > 200) {
+      printColumnCount = 4;
+      printTextSize = "print:text-[9px] print:leading-tight";
+      printTitleSize = "print:text-sm";
+      printCatTitleSize = "print:text-[10px]";
+      printItemSpacing = "print:space-y-0";
+      printCatSpacing = "print:mb-1";
+      printDotSize = "print:w-2 print:h-2";
+    } else if (estimatedLines > 160) {
+      printColumnCount = 4;
+      printTextSize = "print:text-[11px] print:leading-tight";
+      printTitleSize = "print:text-base";
+      printCatTitleSize = "print:text-[12px]";
+      printItemSpacing = "print:space-y-0.5";
+      printCatSpacing = "print:mb-2";
+      printDotSize = "print:w-2.5 print:h-2.5";
+    } else if (estimatedLines > 125) {
+      printColumnCount = 3;
+      printTextSize = "print:text-[12px] print:leading-tight";
+      printTitleSize = "print:text-lg";
+      printCatTitleSize = "print:text-[13px]";
+      printItemSpacing = "print:space-y-0.5";
+      printCatSpacing = "print:mb-3";
+      printDotSize = "print:w-3 print:h-3";
+    }
+  } else {
+    printColumnCount = columnMode;
+    if (columnMode === 4) {
+      printTextSize = "print:text-[11px] print:leading-tight";
+      printTitleSize = "print:text-base";
+      printCatTitleSize = "print:text-[12px]";
+      printItemSpacing = "print:space-y-0.5";
+      printCatSpacing = "print:mb-2";
+      printDotSize = "print:w-2.5 print:h-2.5";
+    } else if (columnMode === 3) {
+      printTextSize = "print:text-[12px] print:leading-tight";
+      printTitleSize = "print:text-lg";
+      printCatTitleSize = "print:text-[13px]";
+      printItemSpacing = "print:space-y-0.5";
+      printCatSpacing = "print:mb-3";
+      printDotSize = "print:w-3 print:h-3";
+    } else if (columnMode === 2) {
+      printTextSize = "print:text-[14px]";
+      printTitleSize = "print:text-xl";
+      printCatTitleSize = "print:text-[15px]";
+      printItemSpacing = "print:space-y-1";
+      printCatSpacing = "print:mb-4";
+      printDotSize = "print:w-3.5 print:h-3.5";
+    } else if (columnMode === 1) {
+      printTextSize = "print:text-base";
+      printTitleSize = "print:text-2xl";
+      printCatTitleSize = "print:text-lg";
+      printItemSpacing = "print:space-y-1.5";
+      printCatSpacing = "print:mb-6";
+      printDotSize = "print:w-4 print:h-4";
+    }
   }
 
   return (
@@ -113,16 +149,33 @@ export function PrintPage() {
           }
         `}
       </style>
-      <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between bg-white p-4 rounded-lg shadow print:hidden">
+      <div className="max-w-4xl mx-auto mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-lg shadow print:hidden">
         <Link to={`/liste/${listeId}`} className="text-gray-600 hover:text-gray-900 flex items-center gap-2 font-medium">
           <ArrowLeft size={20} /> Retour
         </Link>
-        <button
-          onClick={() => handlePrint()}
-          className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2 font-medium shadow-sm"
-        >
-          <Download size={20} /> Exporter PDF / Imprimer
-        </button>
+        <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <label htmlFor="col-select" className="font-medium hidden sm:inline">Colonnes :</label>
+            <select
+              id="col-select"
+              value={columnMode}
+              onChange={(e) => setColumnMode(e.target.value === 'auto' ? 'auto' : Number(e.target.value) as any)}
+              className="border border-gray-300 rounded-md px-2 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50"
+            >
+              <option value="auto">Auto</option>
+              <option value={1}>1 Colonne</option>
+              <option value={2}>2 Colonnes</option>
+              <option value={3}>3 Colonnes</option>
+              <option value={4}>4 Colonnes</option>
+            </select>
+          </div>
+          <button
+            onClick={() => handlePrint()}
+            className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2 font-medium shadow-sm transition-colors"
+          >
+            <Download size={20} /> <span className="hidden sm:inline">Exporter PDF / Imprimer</span><span className="sm:hidden">Imprimer</span>
+          </button>
+        </div>
       </div>
 
       {/* Printable Area */}
