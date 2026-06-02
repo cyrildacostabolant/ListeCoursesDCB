@@ -204,3 +204,19 @@ export const remove = mutation({
     await ctx.db.patch(args.listeId, { dateModification: Date.now() });
   },
 });
+
+export const updateOrders = mutation({
+  args: {
+    orders: v.array(v.object({
+      id: v.id("listeArticles"),
+      ordre: v.number(),
+    })),
+    listeId: v.id("listes"),
+  },
+  handler: async (ctx, args) => {
+    for (const { id, ordre } of args.orders) {
+      await ctx.db.patch(id, { ordre });
+    }
+    await ctx.db.patch(args.listeId, { dateModification: Date.now() });
+  },
+});

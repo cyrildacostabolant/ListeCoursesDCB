@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { ArrowLeft, Printer, Plus, Trash2, Edit2, Check, X, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, Printer, Plus, Trash2, Edit2, Check, X, ChevronDown, ChevronRight, ArrowUpDown, ChevronUp, GripVertical } from "lucide-react";
 
 export function ListeDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +17,7 @@ export function ListeDetailsPage() {
   const updateArticle = useMutation(api.listeArticles.update);
   const removeArticle = useMutation(api.listeArticles.remove);
   const updateListe = useMutation(api.listes.update);
+  const updateOrders = useMutation(api.listeArticles.updateOrders);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editNom, setEditNom] = useState("");
@@ -32,6 +33,75 @@ export function ListeDetailsPage() {
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
+
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [draggedOverId, setDraggedOverId] = useState<string | null>(null);
+
+  const handleDragUpdate = async (categoryItems: any[], sourceIndex: number, targetIndex: number) => {
+    if (sourceIndex === targetIndex) return;
+
+    const newItems = [...categoryItems];
+    const [removed] = newItems.splice(sourceIndex, 1);
+    newItems.splice(targetIndex, 0, removed);
+
+    const originalOrders = categoryItems.map(item => item.ordre).sort((a, b) => a - b);
+    const orderUpdates = newItems.map((item, index) => ({
+      id: item._id,
+      ordre: originalOrders[index]
+    }));
+
+    await updateOrders({
+      orders: orderUpdates,
+      listeId,
+    });
+  };
+
+  const moveItem = async (categoryItems: any[], currentIndex: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= categoryItems.length) return;
+
+    const newItems = [...categoryItems];
+    const temp = newItems[currentIndex];
+    newItems[currentIndex] = newItems[targetIndex];
+    newItems[targetIndex] = temp;
+
+    const originalOrders = categoryItems.map(item => item.ordre).sort((a, b) => a - b);
+    const orderUpdates = newItems.map((item, index) => ({
+      id: item._id,
+      ordre: originalOrders[index]
+    }));
+
+    await updateOrders({
+      orders: orderUpdates,
+      listeId,
+    });
+  };
+
+  const onDragStart = (e: React.DragEvent, id: string, index: number) => {
+    e.dataTransfer.setData("text/plain", `${index}`);
+    setDraggedItemId(id);
+  };
+
+  const onDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    setDraggedOverId(id);
+  };
+
+  const onDragLeave = () => {
+    setDraggedOverId(null);
+  };
+
+  const onDrop = async (e: React.DragEvent, categoryItems: any[], targetIndex: number) => {
+    e.preventDefault();
+    const sourceIndexStr = e.dataTransfer.getData("text/plain");
+    const sourceIndex = parseInt(sourceIndexStr, 10);
+    setDraggedItemId(null);
+    setDraggedOverId(null);
+
+    if (isNaN(sourceIndex) || sourceIndex === targetIndex) return;
+    await handleDragUpdate(categoryItems, sourceIndex, targetIndex);
+  };
   
   // Initialize collapsed state and selected categories
   React.useEffect(() => {
@@ -227,6 +297,19 @@ export function ListeDetailsPage() {
             <ChevronRight size={16} className={`transition-transform ${isSidebarOpen ? "rotate-90" : ""}`} />
             Rayons
           </button>
+          
+          <button
+            onClick={() => setIsReorderMode(!isReorderMode)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors border shadow-sm ${
+              isReorderMode 
+                ? "bg-amber-600 border-amber-700 text-white hover:bg-amber-700 font-semibold" 
+                : "bg-white border-gray-200 text-gray-700 hover:bg-gray-100/70"
+            }`}
+          >
+            <ArrowUpDown size={15} />
+            <span>{isReorderMode ? "Terminer" : "Réorganiser"}</span>
+          </button>
+
           <span className="text-sm text-gray-500 mr-2 hidden md:inline">
             {articles.length} article{articles.length !== 1 ? 's' : ''}
           </span>
@@ -339,10 +422,30 @@ export function ListeDetailsPage() {
                   <div className="border-t border-gray-200">
                     <table className="w-full text-left text-sm">
                       <tbody className="divide-y divide-gray-100">
-                        {cat.items.map((item) => (
-                          <tr key={item._id} className="hover:bg-gray-50 transition-colors group">
-                            <td className="px-2 py-1 w-8 text-center">
-                              <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer" />
+                        {cat.items.map((item, idx) => (
+                          <tr 
+                            key={item._id} 
+                            draggable={isReorderMode}
+                            onDragStart={(e) => onDragStart(e, item._id, idx)}
+                            onDragOver={(e) => onDragOver(e, item._id)}
+                            onDragLeave={onDragLeave}
+                            onDrop={(e) => onDrop(e, cat.items, idx)}
+                            className={`transition-colors group border-b border-gray-100 ${
+                              isReorderMode 
+                                ? "cursor-grab active:cursor-grabbing hover:bg-amber-50/20" 
+                                : "hover:bg-gray-50"
+                            } ${draggedItemId === item._id ? "opacity-30 bg-gray-50" : ""} ${
+                              draggedOverId === item._id ? "bg-amber-50/50 border-t-2 border-dashed border-amber-400" : ""
+                            }`}
+                          >
+                            <td className="px-2 py-1 w-12 text-center select-none">
+                              {isReorderMode ? (
+                                <div className="flex items-center justify-center p-0.5">
+                                  <GripVertical size={14} className="text-amber-500 cursor-grab shrink-0" />
+                                </div>
+                              ) : (
+                                <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer" />
+                              )}
                             </td>
                             
                             {editingId === item._id ? (
@@ -375,25 +478,58 @@ export function ListeDetailsPage() {
                               </>
                             ) : (
                               <>
-                                <td className="px-2 py-1 font-medium text-gray-800">{item.articleNom}</td>
-                                <td className="px-2 py-1 text-gray-600 w-20 sm:w-24">{item.quantite}</td>
-                                <td className="px-2 py-1 w-20 text-right">
-                                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => startEdit(item)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Modifier">
-                                      <Edit2 size={14} />
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        if (window.confirm("Supprimer cet article ?")) {
-                                          removeArticle({ id: item._id, listeId });
-                                        }
-                                      }}
-                                      className="p-1 text-red-600 hover:bg-red-50 rounded"
-                                      title="Supprimer"
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
-                                  </div>
+                                <td className={`px-2 py-1 font-medium text-gray-800 ${isReorderMode ? "select-none" : ""}`}>
+                                  {item.articleNom}
+                                </td>
+                                <td className={`px-2 py-1 text-gray-600 w-20 sm:w-24 ${isReorderMode ? "select-none" : ""}`}>
+                                  {item.quantite}
+                                </td>
+                                <td className="px-2 py-1 w-24 text-right">
+                                  {isReorderMode ? (
+                                    <div className="flex items-center justify-end gap-1 select-none">
+                                      <button 
+                                        disabled={idx === 0}
+                                        onClick={() => moveItem(cat.items, idx, 'up')}
+                                        className={`p-1.5 rounded transition-colors ${
+                                          idx === 0 
+                                            ? "text-gray-200 cursor-not-allowed opacity-20" 
+                                            : "text-amber-600 hover:bg-amber-100/50"
+                                        }`}
+                                        title="Monter"
+                                      >
+                                        <ChevronUp size={16} />
+                                      </button>
+                                      <button 
+                                        disabled={idx === cat.items.length - 1}
+                                        onClick={() => moveItem(cat.items, idx, 'down')}
+                                        className={`p-1.5 rounded transition-colors ${
+                                          idx === cat.items.length - 1 
+                                            ? "text-gray-200 cursor-not-allowed opacity-20" 
+                                            : "text-amber-600 hover:bg-amber-100/50"
+                                        }`}
+                                        title="Descendre"
+                                      >
+                                        <ChevronDown size={16} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button onClick={() => startEdit(item)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Modifier">
+                                        <Edit2 size={14} />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          if (window.confirm("Supprimer cet article ?")) {
+                                            removeArticle({ id: item._id, listeId });
+                                          }
+                                        }}
+                                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                        title="Supprimer"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  )}
                                 </td>
                               </>
                             )}
@@ -401,7 +537,7 @@ export function ListeDetailsPage() {
                         ))}
 
                         {/* Inline Add Row */}
-                        {isAdding && (
+                        {isAdding && !isReorderMode && (
                           <tr className="bg-blue-50/50">
                             <td className="px-2 py-1 w-8 text-center">
                               <span className="text-gray-300">-</span>
