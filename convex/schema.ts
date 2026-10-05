@@ -12,7 +12,7 @@ export default defineSchema({
     nom: v.string(),
     categorieId: v.id("categories"),
     quantite: v.string(),
-  }),
+  }).index("by_categorie", ["categorieId"]),
   listes: defineTable({
     nom: v.string(),
     dateCreation: v.number(),

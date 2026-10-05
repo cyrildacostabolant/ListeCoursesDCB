@@ -36,18 +36,23 @@ export const add = mutation({
     quantite: v.string(),
   },
   handler: async (ctx, args) => {
-    // Find or create article
-    let article = await ctx.db.query("articles").filter(q => q.eq(q.field("nom"), args.nom)).first();
+    const trimmedNom = args.nom.trim();
+
+    // Find article with the same name in THIS specific category
+    const articlesInCat = await ctx.db.query("articles")
+      .withIndex("by_categorie", q => q.eq("categorieId", args.categorieId))
+      .collect();
+
+    let article = articlesInCat.find(
+      a => a.nom.trim().toLowerCase() === trimmedNom.toLowerCase()
+    );
+
     let articleId;
     if (article) {
       articleId = article._id;
-      // Optionally update category if changed
-      if (article.categorieId !== args.categorieId) {
-        await ctx.db.patch(articleId, { categorieId: args.categorieId });
-      }
     } else {
       articleId = await ctx.db.insert("articles", {
-        nom: args.nom,
+        nom: trimmedNom,
         categorieId: args.categorieId,
         quantite: args.quantite,
       });
@@ -84,31 +89,41 @@ export const addBulk = mutation({
     let maxOrdreItem = listeItems.reduce((max, i) => Math.max(max, i.ordre), 0);
 
     for (const item of args.items) {
-      let cat = categories.find(c => c.nom.toLowerCase() === item.categorieNom.toLowerCase());
+      const itemNom = item.nom.trim();
+      if (!itemNom) continue;
+
+      const catNom = item.categorieNom.trim();
+      let cat = categories.find(c => c.nom.toLowerCase() === catNom.toLowerCase());
       let catId;
       if (cat) {
         catId = cat._id;
       } else {
         maxOrdreCat++;
         catId = await ctx.db.insert("categories", {
-          nom: item.categorieNom || "Sans catégorie",
+          nom: catNom || "Sans catégorie",
           ordre: maxOrdreCat,
           actif: true,
           couleur: "#e5e7eb"
         });
-        categories.push({ _id: catId, nom: item.categorieNom, ordre: maxOrdreCat, actif: true, couleur: "#e5e7eb" } as any);
+        cat = { _id: catId, nom: catNom || "Sans catégorie", ordre: maxOrdreCat, actif: true, couleur: "#e5e7eb" } as any;
+        categories.push(cat);
       }
 
-      let article = await ctx.db.query("articles").filter(q => q.eq(q.field("nom"), item.nom)).first();
+      // Find article with the same name in THIS specific category
+      const articlesInCat = await ctx.db.query("articles")
+        .withIndex("by_categorie", q => q.eq("categorieId", catId))
+        .collect();
+
+      let article = articlesInCat.find(
+        a => a.nom.trim().toLowerCase() === itemNom.toLowerCase()
+      );
+
       let articleId;
       if (article) {
         articleId = article._id;
-        if (article.categorieId !== catId) {
-          await ctx.db.patch(articleId, { categorieId: catId });
-        }
       } else {
         articleId = await ctx.db.insert("articles", {
-          nom: item.nom,
+          nom: itemNom,
           categorieId: catId,
           quantite: item.quantite,
         });
@@ -139,17 +154,23 @@ export const update = mutation({
     if (!item) return;
 
     const oldArticleId = item.articleId;
+    const trimmedNom = args.nom.trim();
 
-    let article = await ctx.db.query("articles").filter(q => q.eq(q.field("nom"), args.nom)).first();
+    // Check if an article already exists with this name in this category
+    const articlesInCat = await ctx.db.query("articles")
+      .withIndex("by_categorie", q => q.eq("categorieId", args.categorieId))
+      .collect();
+
+    let article = articlesInCat.find(
+      a => a.nom.trim().toLowerCase() === trimmedNom.toLowerCase()
+    );
+
     let articleId;
     if (article) {
       articleId = article._id;
-      if (article.categorieId !== args.categorieId) {
-        await ctx.db.patch(articleId, { categorieId: args.categorieId });
-      }
     } else {
       articleId = await ctx.db.insert("articles", {
-        nom: args.nom,
+        nom: trimmedNom,
         categorieId: args.categorieId,
         quantite: args.quantite,
       });
